@@ -418,7 +418,8 @@ class RemoteDeckTests(PanelCase):
                 with self.assertRaises(ValueError):RemoteDecks(directory,'http://127.0.0.1:8790')
                 spec=importlib.util.spec_from_file_location('isolated_panel_decks',ROOT/'panel/panel.py')
                 panel=importlib.util.module_from_spec(spec)
-                with patch('builtins.print') as output:spec.loader.exec_module(panel)
+                # The first load of the panel took the password out of the environment.
+                with patch.dict('os.environ',{'PANEL_PASSWORD':'test-password-only'}),patch('builtins.print') as output:spec.loader.exec_module(panel)
                 self.assertIsInstance(panel.remote_decks,UnavailableDecks)
                 self.assertEqual(panel.remote_decks.status()['decks'],[])
                 self.assertIn(str(path),output.call_args.args[0])

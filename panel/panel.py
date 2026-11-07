@@ -67,7 +67,9 @@ def usable_bind_host(host, run=subprocess.run):
 BIND_HOST = usable_bind_host(os.environ.get("BIND_HOST", "127.0.0.1"))
 BIND_PORT = int(os.environ.get("BIND_PORT", "8790"))
 PANEL_USER = os.environ.get("PANEL_USER", "dev")
-PANEL_PASSWORD = os.environ["PANEL_PASSWORD"]
+# Out of the environment at once: every child inherits it otherwise, and a tmux server this panel starts hands it
+# to all agents, their tools and install scripts.
+PANEL_PASSWORD = os.environ.pop("PANEL_PASSWORD")
 TTYD_SOCK = os.environ.get("TTYD_SOCK", f"/run/user/{os.getuid()}/cc-ttyd.sock")
 PROJECTS = os.path.expanduser(os.environ.get("PROJECTS_DIR", "~/dev"))
 TMUX_COMMAND = ["tmux"] + (["-L", os.environ["TMUX_SOCKET_NAME"]] if os.environ.get("TMUX_SOCKET_NAME") else [])
@@ -3725,11 +3727,18 @@ def enable_terminal_links():
         print("Could not turn on terminal links in tmux", flush=True)
 
 
+def forget_password_in_tmux():
+    """A server started before the password left the environment, or by a container's entrypoint, still gives it
+    to each new window. Windows already open keep their copy until they end."""
+    tmux("set-environment", "-g", "-u", "PANEL_PASSWORD", check=False)
+
+
 def main():
     keep_sessions_on_oom()
     if sys.platform == "darwin" and os.environ.get("TMUX_SOCKET_NAME") and not tmux_server_pid():
         config = os.path.expanduser("~/.config/cc-panel/tmux.conf")
         tmux("-f", config, "new-session", "-d", "-s", "_keep")
+    forget_password_in_tmux()
     enable_terminal_links()
     if LMStudio:
         try:

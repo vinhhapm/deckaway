@@ -916,3 +916,15 @@ class PerformanceSnapshotTests(PanelCase):
             clock[0] += 16
             self.panel.github_status()
             self.assertEqual(gh.call_count, 2)
+
+
+class PasswordEnvironmentTests(PanelCase):
+    def test_children_cannot_inherit_the_password(self):
+        # Agents, their tools and install scripts all descend from this environment.
+        self.assertNotIn('PANEL_PASSWORD', os.environ)
+        self.assertEqual(self.panel.PANEL_PASSWORD, 'test-password-only')
+
+    def test_a_running_tmux_server_forgets_the_password(self):
+        self.panel.tmux = Mock()
+        self.panel.forget_password_in_tmux()
+        self.panel.tmux.assert_called_once_with('set-environment', '-g', '-u', 'PANEL_PASSWORD', check=False)
