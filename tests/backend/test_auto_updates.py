@@ -18,8 +18,22 @@ class AutoUpdateTests(unittest.TestCase):
         self.available=Mock(return_value=True)
         self.idle=Mock(return_value=True)
         self.worker=AutoUpdates(self.root,self.info,self.start,self.available,self.idle,lambda:self.now)
+        self.worker.save(True)
 
-    def test_enabled_by_default_checks_and_starts_once_then_throttles(self):
+    def test_off_until_its_owner_turns_it_on(self):
+        # A release replaces the code holding every login: nothing may install one unasked.
+        (self.root/'updates.json').unlink()
+        fresh=AutoUpdates(self.root,self.info,self.start,self.available,self.idle,lambda:self.now)
+        self.assertFalse(fresh.status()['enabled'])
+        fresh.tick()
+        self.info.assert_not_called();self.start.assert_not_called()
+
+    def test_no_update_repository_is_trusted_by_default(self):
+        source=(Path(__file__).parents[2]/'panel/panel.py').read_text()
+        self.assertIn('UPDATE_REPO = os.environ.get("UPDATE_REPO", "")',source)
+        self.assertFalse(updater.available(self.root,''))
+
+    def test_when_enabled_checks_and_starts_once_then_throttles(self):
         self.worker.tick();self.worker.tick()
         self.info.assert_called_once();self.start.assert_called_once()
         self.now+=1801;self.worker.tick()

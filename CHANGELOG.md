@@ -2,6 +2,10 @@
 
 Versions follow [semver](https://semver.org). Install a version with `sudo ./update.sh vX.Y.Z` (older than the installed one: `sudo FORCE_DOWNGRADE=1 ./update.sh vX.Y.Z`).
 
+## Unreleased
+
+- The panel no longer updates itself from a repository you did not choose. `UPDATE_REPO` is now empty by default and automatic updates are off until turned on in Settings, because releases are unsigned and run with every login the panel can reach.
+
 ## 1.79.0
 
 - Attachments reach agents in Windows sessions. They were named by their place in WSL, which a Windows program cannot open; now each is copied into `%LOCALAPPDATA%\DeckAway\uploads\<session>` and named by its Windows path. The copies are removed after 7 days like the originals, and with the session.

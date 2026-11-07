@@ -283,7 +283,8 @@ try:
         VERSION = version_file.read().strip()
 except OSError:
     VERSION = "dev"
-UPDATE_REPO = os.environ.get("UPDATE_REPO", "matacoder/deckaway")   # "" disables the update check
+# Releases are unsigned and replace the code that holds every login: no repository is trusted unless named here.
+UPDATE_REPO = os.environ.get("UPDATE_REPO", "")   # "" disables the update check
 CHECKOUT = os.environ.get("CHECKOUT", "")                             # where install.sh ran from
 UPDATE_STATE = os.path.expanduser("~/.config/cc-panel/update.json")
 action_lock = threading.Lock()

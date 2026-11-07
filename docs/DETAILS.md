@@ -139,8 +139,11 @@ now if the limit were spent evenly until the reset.
 
 ## Updates and releases
 
-- The panel checks the latest GitHub release every 6 h (`UPDATE_REPO=` in `~/.config/cc-panel/env`
-  disables it). When a newer stable release exists, **Update to vX.Y.Z** appears in the sidebar
+- Updates are off until you choose a source: releases are not signed, and installing one runs its code with
+  every login this panel can reach. Set `UPDATE_REPO=owner/repo` in `~/.config/cc-panel/env` (on macOS, add it
+  to `~/.config/cc-panel/macos.json` and rerun the installer), then restart the panel. Automatic updates stay
+  off until you also turn them on in Settings. With a source set, the panel checks its latest GitHub release
+  every 6 h. When a newer stable release exists, **Update to vX.Y.Z** appears in the sidebar
   and the mobile **⋯** menu. Click it to update the panel without root.
 - The detached updater downloads the official release from the configured GitHub repository,
   validates its version, allowed files and Python syntax, backs up the installed panel and restarts

@@ -227,7 +227,9 @@ panel works normally and retries the download every 10 minutes; only backups and
 
 ## Update
 
-The panel shows **↑ vX.Y.Z** in the sidebar when a release is out; click it (or the mobile **⋯** menu)
+Nothing updates by itself: no update source is set by default. To update from a checkout, review the new
+code, then rerun the installer from it. After you set `UPDATE_REPO` ([details](DETAILS.md#updates-and-releases)),
+the panel shows **↑ vX.Y.Z** in the sidebar when a release is out; click it (or the mobile **⋯** menu)
 to update just the panel without root. Settings are kept and running sessions are not interrupted.
 See [CHANGELOG.md](../CHANGELOG.md).
 

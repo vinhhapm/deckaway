@@ -15,7 +15,7 @@ class AutoUpdates:
         self.lock = threading.RLock()
         error = ''
         try:
-            self.enabled = read_json(self.path, {}).get('enabled', True) is True
+            self.enabled = read_json(self.path, {}).get('enabled', False) is True
         except (OSError,ValueError,AttributeError):
             self.enabled = False
             error = 'Could not read automatic update settings'
