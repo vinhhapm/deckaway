@@ -4,6 +4,7 @@ from pathlib import Path
 import plistlib
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
@@ -103,6 +104,93 @@ class NetworkSwitchTests(unittest.TestCase):
     def test_same_address_does_not_restart_the_panel(self):
         network.use_tailscale(self.home)
         self.assertEqual(self.steps, [])
+
+
+class CloudflareTunnelTests(NetworkSwitchTests):
+    URL = 'https://calm-river-word.trycloudflare.com'
+
+    def setUp(self):
+        super().setUp()
+        self.answers = [self.URL]
+        self.tunnel_plist, logs = network.tunnel_paths(self.home)
+        self.log = logs / (network.TUNNEL + '.log')
+        for name, replacement in (('run', self.fake_run), ('cloudflared', Mock(return_value='/bin/cloudflared'))):
+            patcher = patch.object(network, name, replacement)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        patcher = patch.object(network.time, 'sleep')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def fake_run(self, *args, check=True):
+        if args[1] == 'bootstrap':
+            self.steps.append('tunnel')
+            self.log.write_text(''.join(f'INF |  {url}  |\n' for url in self.answers))
+        elif args[1] == 'bootout':
+            self.steps.append('tunnel stop')
+        return SimpleNamespace(returncode=1 if args[1] == 'print' else 0)
+
+    def test_moves_the_panel_to_loopback_before_the_tunnel_opens(self):
+        network.use_cloudflare(self.home, lambda: True)
+        self.assertEqual(self.steps, ['restart', 'tunnel'])
+        settings, environment = self.saved()
+        self.assertEqual((settings['BIND_HOST'], environment['BIND_HOST'], settings['BIND_HOST_AUTO']), ('127.0.0.1', '127.0.0.1', '0'))
+        arguments = plistlib.loads(self.tunnel_plist.read_bytes())['ProgramArguments']
+        self.assertEqual(arguments[-2:], ['--url', 'http://127.0.0.1:8790'])
+        self.assertEqual(network.tunnel_url(self.home), self.URL)
+
+    def test_a_weak_password_opens_no_tunnel(self):
+        self.write_settings('short', '100.64.0.5')
+        with self.assertRaisesRegex(ValueError, 'too weak'):
+            network.use_cloudflare(self.home, lambda: True)
+        self.assertEqual(self.steps, [])
+        self.assertFalse(self.tunnel_plist.exists())
+
+    def test_refused_confirmation_opens_no_tunnel(self):
+        with self.assertRaisesRegex(ValueError, 'Cancelled'):
+            network.use_cloudflare(self.home, lambda: False)
+        self.assertEqual(self.steps, [])
+
+    def test_no_address_stops_the_tunnel_and_stays_on_loopback(self):
+        self.answers = []
+        with self.assertRaisesRegex(RuntimeError, 'no address'):
+            network.use_cloudflare(self.home, lambda: True)
+        self.assertFalse(self.tunnel_plist.exists())
+        self.assertEqual(self.saved()[1]['BIND_HOST'], '127.0.0.1')
+
+    def test_the_newest_address_is_the_one_shown(self):
+        self.answers = ['https://old-one.trycloudflare.com', self.URL]
+        network.use_cloudflare(self.home, lambda: True)
+        self.assertEqual(network.tunnel_url(self.home), self.URL)
+
+    def test_status_never_reads_private_while_the_tunnel_is_open(self):
+        network.use_cloudflare(self.home, lambda: True)
+        with patch('builtins.print') as output:
+            network.status(self.home)
+        self.assertIn('Mode: cloudflare', output.call_args[0][0])
+        self.assertIn(self.URL, output.call_args[0][0])
+
+    def test_local_closes_every_public_door(self):
+        network.use_cloudflare(self.home, lambda: True)
+        self.funnel_is_on = True
+        self.steps.clear()
+        network.use_local(self.home)
+        self.assertEqual(self.steps, ['funnel --https=443 off', 'tunnel stop'])
+        self.assertFalse(self.tunnel_plist.exists())
+
+    def test_tailscale_closes_the_tunnel_before_moving_the_panel(self):
+        network.use_cloudflare(self.home, lambda: True)
+        self.steps.clear()
+        network.use_tailscale(self.home)
+        self.assertEqual(self.steps, ['tunnel stop', 'restart'])
+        self.assertFalse(self.tunnel_plist.exists())
+
+    def test_a_tunnel_that_will_not_stop_is_reported_and_kept_on_record(self):
+        network.use_cloudflare(self.home, lambda: True)
+        with patch.object(network, 'run', return_value=SimpleNamespace(returncode=0)), \
+                self.assertRaisesRegex(RuntimeError, 'still running'):
+            network.use_local(self.home)
+        self.assertTrue(self.tunnel_plist.exists())
 
 
 class TailscaleCommandTests(unittest.TestCase):

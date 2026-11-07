@@ -5,7 +5,7 @@ Versions follow [semver](https://semver.org). Install a version with `sudo ./upd
 ## Unreleased
 
 - The panel password no longer reaches agents through the environment. The panel removes it from its own environment at startup and from a running tmux server, so new sessions and child processes do not inherit it. Windows already open keep their copy until they end.
-- macOS: `macos/network.py` switches a Mac between Tailscale and public HTTPS through Tailscale Funnel. Plain HTTP is never published, and a weak password refuses to go public.
+- macOS: `macos/network.py` switches a Mac between this Mac only, Tailscale, and public HTTPS through Tailscale Funnel or a Cloudflare quick tunnel. Plain HTTP is never published, and a weak password refuses to go public.
 - The panel no longer updates itself from a repository you did not choose. `UPDATE_REPO` is now empty by default and automatic updates are off until turned on in Settings, because releases are unsigned and run with every login the panel can reach.
 
 ## 1.79.0

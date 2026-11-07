@@ -95,7 +95,9 @@ packages in it, only so the background services keep one interpreter path; proce
 come from macOS's own `ps`, `sysctl` and `vm_stat`.
 
 To switch how a Mac is reached, link `macos/network.py` onto your `PATH` as `deckaway-network`, then run
-`deckaway-network tailscale`, `internet` or `status`. `internet` publishes the panel over HTTPS with
+`deckaway-network local`, `tailscale`, `internet`, `cloudflare` or `status`. `cloudflare` publishes the panel
+over HTTPS with a Cloudflare quick tunnel, with no account or domain: its address changes whenever the tunnel
+restarts, it has no uptime guarantee, and Cloudflare can read the traffic, including your password. `internet` publishes the panel over HTTPS with
 [Tailscale Funnel](https://tailscale.com/kb/1223/funnel), so no router change is needed and a device connecting
 to it does not need Tailscale. The panel then listens on loopback only, and its address on your tailnet is off
 until you switch back. Signing in gives a shell, so anyone with the password controls this user account.
