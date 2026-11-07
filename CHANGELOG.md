@@ -4,6 +4,7 @@ Versions follow [semver](https://semver.org). Install a version with `sudo ./upd
 
 ## Unreleased
 
+- macOS: `macos/network.py` switches a Mac between Tailscale and public HTTPS through Tailscale Funnel. Plain HTTP is never published, and a weak password refuses to go public.
 - The panel no longer updates itself from a repository you did not choose. `UPDATE_REPO` is now empty by default and automatic updates are off until turned on in Settings, because releases are unsigned and run with every login the panel can reach.
 
 ## 1.79.0
